@@ -3,10 +3,10 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-from board import Board, CellType
-from piece import PieceType, Flavor
+from board import Board
 from assets import AssetManager
 from game import Game
+from constants import CellType, PieceType, Flavor
 
 
 class NeutrinoGUI:
@@ -134,6 +134,20 @@ class NeutrinoGUI:
 
         # Draw the button backgrounds
         pygame.draw.rect(self.screen, (200, 200, 200), self.btn_mu, border_radius=15)
+        pygame.draw.rect(self.screen, (200, 200, 200), self.btn_tau, border_radius=15)
+        pygame.draw.rect(self.screen, (0, 0, 0), self.btn_mu, width=3, border_radius=15)
+        pygame.draw.rect(self.screen, (0, 0, 0), self.btn_tau, width=3, border_radius=15)
+
+        # Render the text symbols onto the buttons
+        text_mu = self.assets.font.render(self.assets.symbols[Flavor.MUONIC], True, (0, 0, 0))
+        text_tau = self.assets.font.render(self.assets.symbols[Flavor.TAUONIC], True, (0, 0, 0))
+
+        self.screen.blit(text_mu, text_mu.get_rect(center=self.btn_mu.center))
+        self.screen.blit(text_tau, text_tau.get_rect(center=self.btn_tau.center))
+
+        # Draw the prompt text
+        prompt = self.assets.font.render("Long Range Jump! Choose new flavor:", True, (0, 0, 0))
+        self.screen.blit(prompt, prompt.get_rect(center=(center_x, center_y - 80)))
 
     def run(self):
         """ Main game loop.

@@ -1,14 +1,5 @@
-from piece import Piece, Army, PieceType, Flavor
-
-from enum import Enum
-
-
-class CellType(Enum):
-    """ Enum representing the distinct functional zones on the board.
-    """
-    KING = 0
-    DEPLOYMENT = 1
-    BATTLE = 2
+from piece import Piece
+from constants import CellType, Army, PieceType, Flavor
 
 
 class Cell:

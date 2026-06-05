@@ -2,24 +2,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from enum import Enum
 
+from constants import Army, PieceType, Flavor, CellType
+
 if TYPE_CHECKING:
     from board import Cell, Board
-
-
-class Army(Enum):
-    NEUTRINO = 0
-    ANTI_NEUTRINO = 1
-
-
-class PieceType(Enum):
-    REGULAR = 0
-    KING = 1
-
-
-class Flavor(Enum):
-    ELECTRONIC = 0
-    MUONIC = 1
-    TAUONIC = 2
 
 
 class Piece:
@@ -75,8 +61,19 @@ class Piece:
         distance = self._get_distance(start_cell, target_cell)
         if distance not in (1, 2):
             return False
+        if start_cell.cell_type == CellType.DEPLOYMENT or start_cell.cell_type == CellType.KING:
+            if self.army == Army.NEUTRINO and target_cell.q >= start_cell.q:
+                return False
+            if self.army == Army.ANTI_NEUTRINO and target_cell.q <= start_cell.q:
+                return False
+        if start_cell.cell_type == CellType.DEPLOYMENT and target_cell.cell_type == CellType.KING:
+            return False
+        if start_cell.cell_type == CellType.BATTLE and (target_cell.cell_type == CellType.DEPLOYMENT or target_cell.cell_type == CellType.KING):
+            return False
         if target_cell.piece:
             if target_cell.piece.army == self.army:
+                return False
+            if target_cell.piece.flavor not in self.calculate_target_flavor(distance):
                 return False
             
         return True
@@ -96,5 +93,23 @@ class Piece:
                     possible_flavors.append(Flavor.MUONIC)
                 case _:
                     raise ValueError("Flavor not recognized!")
-                
+        # Long range
+        elif distance == 2:
+            match self.flavor:
+                case Flavor.ELECTRONIC:
+                    possible_flavors.append(Flavor.MUONIC)
+                    possible_flavors.append(Flavor.TAUONIC)
+                case Flavor.MUONIC | Flavor.TAUONIC:
+                    possible_flavors.append(Flavor.ELECTRONIC)
+                case _:
+                    raise ValueError("Flavor not recognized!")
+
         return possible_flavors
+    
+
+class King(Piece):
+    def is_valid_move(self, start_cell: Cell, target_cell: Cell, board: Board) -> bool:
+        # Kings cannot capture
+        if target_cell.piece:
+            return False
+        return super().is_valid_move(start_cell, target_cell, board)

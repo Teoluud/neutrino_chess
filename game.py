@@ -1,5 +1,5 @@
 from board import Board, Cell
-from piece import Army, Flavor
+from constants import Army, Flavor
 
 
 class Game:
@@ -54,10 +54,14 @@ class Game:
                 
                 # Check for the Long-Range Electronic oscillation
                 if piece.flavor == Flavor.ELECTRONIC and distance == 2:
-                    self.pending_move_target = target_cell
-                    self.needs_flavor_choice = True
-                    return
-                # If no choice is neede, execute the move normally
+                    if target_cell.piece:
+                        self._execute_move(target_cell, distance, target_cell.piece.flavor)
+                        return
+                    else:
+                        self.pending_move_target = target_cell
+                        self.needs_flavor_choice = True
+                        return
+                # If no choice is needed, execute the move normally
                 self._execute_move(target_cell, distance)
             else:
                 print("Illegal move!")
