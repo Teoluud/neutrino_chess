@@ -42,10 +42,11 @@ class Game:
     def _is_legal_move(self, start_cell: Cell, target_cell: Cell) -> bool:
         """ Checks if there is a piece on the start cell and runs the piece's move validation.
         """
-        if start_cell.piece:
-            return start_cell.piece.is_valid_move(start_cell, target_cell, self.board)
-        else:
+        if not start_cell.piece:
             return False
+        if not start_cell.piece.is_valid_move(start_cell, target_cell, self.board):
+            return False
+        return self.rules.is_move_safe_for_king(start_cell, target_cell, self.current_turn)
 
     def _attempt_move(self, target_cell: Cell):
         """ Validates and executes a move to the target cell.

@@ -30,6 +30,23 @@ class RulesEngine:
         
         return False
     
+    def is_move_safe_for_king(self, start_cell: 'Cell', target_cell: 'Cell', current_turn: 'Army') -> bool:
+        moving_piece = start_cell.piece
+        original_target_piece = target_cell.piece
+        
+        # Simulate the move
+        target_cell.piece = moving_piece
+        start_cell.piece = None
+        
+        # Check if this state leaves the King in danger
+        is_safe = not self.is_in_check(current_turn)
+        
+        # Revert the move
+        start_cell.piece = moving_piece
+        target_cell.piece = original_target_piece
+    
+        return is_safe
+    
     def get_attackers(self, king_cell: Cell, army: Army) -> list[tuple[Piece, Cell]]:
         """ Returns a list of (piece, cell) that are currently threatening the king.
         """
