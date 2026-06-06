@@ -23,3 +23,9 @@ class Flavor(Enum):
     ELECTRONIC = 0
     MUONIC = 1
     TAUONIC = 2
+
+
+class GameState(Enum):
+    PLAYING = 0
+    CHECK = 1
+    CHECKMATE = 2

@@ -3,18 +3,17 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-from board import Board
 from assets import AssetManager
 from game import Game
-from constants import CellType, PieceType, Flavor
+from constants import CellType, PieceType, Flavor, GameState
 
 
 class NeutrinoGUI:
     """ Handles the GUI for the game.
     """
-    def __init__(self, board: Board, game: Game, hex_radius: int = 50) -> None:
-        self.board = board
+    def __init__(self, game: Game, hex_radius: int = 50) -> None:
         self.game = game
+        self.board = self.game.board
         self.hex_radius = hex_radius
         self.assets = AssetManager()
 
@@ -108,6 +107,8 @@ class NeutrinoGUI:
             if cell.piece:
                 color = self.assets.get_color(cell.piece.army)
                 if cell.piece.piece_type == PieceType.KING:
+                    if self.game.game_state == GameState.CHECK and cell.piece.army == self.game.current_turn:
+                        pygame.draw.polygon(self.screen, (255, 0, 0), vertices, width=5)
                     symbol = self.assets.symbols[PieceType.KING] + self.assets.symbols[cell.piece.flavor]
                 else:
                     symbol = self.assets.symbols[cell.piece.flavor]
@@ -152,8 +153,13 @@ class NeutrinoGUI:
     def run(self):
         """ Main game loop.
         """
+        clock = pygame.time.Clock()
         running = True
         while running:
+            if self.game.game_state == GameState.CHECKMATE:
+                running = False
+                print(f"Checkmate! {self.game.current_turn.name} won!")
+                continue
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -178,7 +184,7 @@ class NeutrinoGUI:
                 self.draw_flavor_menu()
             
             pygame.display.flip()
-        
+            clock.tick(60)
         pygame.quit()
 
 

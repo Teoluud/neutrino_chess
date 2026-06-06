@@ -1,4 +1,4 @@
-from piece import Piece
+from piece import Piece, King
 from constants import CellType, Army, PieceType, Flavor
 
 
@@ -58,7 +58,7 @@ class Board:
         """
         starting_positions = {
             # Neutrino King
-            (2, -1): Piece(Army.NEUTRINO, PieceType.KING, Flavor.ELECTRONIC),
+            (2, -1): King(Army.NEUTRINO, PieceType.KING, Flavor.ELECTRONIC),
             # Neutrino Front Line (e)
             (2, -2): Piece(Army.NEUTRINO, PieceType.REGULAR, Flavor.ELECTRONIC),
             (2, 0): Piece(Army.NEUTRINO, PieceType.REGULAR, Flavor.ELECTRONIC),
@@ -69,7 +69,7 @@ class Board:
             (4, -2): Piece(Army.NEUTRINO, PieceType.REGULAR, Flavor.TAUONIC),
 
             # Anti-neutrino King
-            (-2, 1): Piece(Army.ANTI_NEUTRINO, PieceType.KING, Flavor.ELECTRONIC),
+            (-2, 1): King(Army.ANTI_NEUTRINO, PieceType.KING, Flavor.ELECTRONIC),
             # Anti-neutrino Front Line (e)
             (-2, 0): Piece(Army.ANTI_NEUTRINO, PieceType.REGULAR, Flavor.ELECTRONIC),
             (-2, 2): Piece(Army.ANTI_NEUTRINO, PieceType.REGULAR, Flavor.ELECTRONIC),
@@ -82,3 +82,12 @@ class Board:
 
         for position, piece in starting_positions.items():
             self.cells[position].piece = piece
+
+    def find_king(self, army: Army) -> Cell:
+        """ Returns the cell where the King of the given army is located.
+        """
+        for cell in self.cells.values():
+            if cell.piece:
+                if cell.piece.piece_type == PieceType.KING and cell.piece.army == army:
+                    return cell
+        raise ValueError("King not found!")

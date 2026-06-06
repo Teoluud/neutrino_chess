@@ -1,16 +1,19 @@
 from board import Board, Cell
-from constants import Army, Flavor
+from rules import RulesEngine
+from constants import Army, Flavor, GameState
 
 
 class Game:
-    def __init__(self, board: Board) -> None:
-        self.board = board
+    def __init__(self) -> None:
+        self.board = Board()
+        self.rules = RulesEngine(self.board)
         self.current_turn = Army.NEUTRINO
         self.selected_cell = None
 
         # State variables
         self.needs_flavor_choice = False
         self.pending_move_target = None
+        self.game_state = GameState.PLAYING
 
     def handle_click(self, q: int, r: int):
         """ Processes a mouse click at screen coordinates (x, y).
@@ -95,4 +98,10 @@ class Game:
                     self.current_turn = Army.NEUTRINO
                 
                 self.selected_cell = None
+                if self.rules.is_checkmate(self.current_turn):
+                    self.game_state = GameState.CHECKMATE
+                elif self.rules.is_in_check(self.current_turn):
+                    self.game_state = GameState.CHECK
+                else:
+                    self.game_state = GameState.PLAYING
                 print(f"Move successful. It is now {self.current_turn.name}'s turn.")

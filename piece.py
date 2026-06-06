@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from enum import Enum
 
 from constants import Army, PieceType, Flavor, CellType
 
@@ -61,18 +60,26 @@ class Piece:
         distance = self._get_distance(start_cell, target_cell)
         if distance not in (1, 2):
             return False
+        # Can only move forward from DEPLOYMENT/KING cells
         if start_cell.cell_type == CellType.DEPLOYMENT or start_cell.cell_type == CellType.KING:
             if self.army == Army.NEUTRINO and target_cell.q >= start_cell.q:
                 return False
             if self.army == Army.ANTI_NEUTRINO and target_cell.q <= start_cell.q:
                 return False
+        # Cannot move from DEPLOYMENT to KING cell
         if start_cell.cell_type == CellType.DEPLOYMENT and target_cell.cell_type == CellType.KING:
             return False
+        # Cannot move from BATTLE to DEPLOYMENT/KING cell
         if start_cell.cell_type == CellType.BATTLE and (target_cell.cell_type == CellType.DEPLOYMENT or target_cell.cell_type == CellType.KING):
-            return False
+            if target_cell.piece and target_cell.piece.piece_type == PieceType.KING:
+                pass # Allow the move to proceed to the check logic
+            else:
+                return False
         if target_cell.piece:
+            # Check if there's own piece
             if target_cell.piece.army == self.army:
                 return False
+            # Capturing conditions
             if target_cell.piece.flavor not in self.calculate_target_flavor(distance):
                 return False
             
@@ -108,6 +115,9 @@ class Piece:
     
 
 class King(Piece):
+    def __init__(self, army: Army, piece_type: PieceType, flavor: Flavor) -> None:
+        super().__init__(army, piece_type, flavor)
+
     def is_valid_move(self, start_cell: Cell, target_cell: Cell, board: Board) -> bool:
         # Kings cannot capture
         if target_cell.piece:
