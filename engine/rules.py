@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from constants import Army, PieceType, Flavor
+from engine.constants import Army, PieceType, Flavor
 
 if TYPE_CHECKING:
-    from board import Board, Cell
-    from piece import Piece
+    from engine.board import Board, Cell
+    from engine.piece import Piece
 
 
 class RulesEngine:

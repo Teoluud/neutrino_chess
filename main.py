@@ -1,5 +1,5 @@
-from game import Game
-from gui import NeutrinoGUI
+from engine.game import Game
+from frontend.gui import NeutrinoGUI
 
 
 game = Game()

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from piece import Piece, King
-from constants import CellType, Army, PieceType, Flavor
+from engine.piece import Piece, King
+from engine.constants import CellType, Army, PieceType, Flavor
 
 
 @dataclass

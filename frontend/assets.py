@@ -1,5 +1,5 @@
 import pygame
-from piece import Army, PieceType, Flavor
+from engine.piece import Army, PieceType, Flavor
 
 
 class AssetManager:

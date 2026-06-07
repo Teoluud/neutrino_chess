@@ -3,10 +3,10 @@ import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-from assets import AssetManager
-from game import Game
-from ui import Button, UIManager
-from constants import CellType, PieceType, Flavor, GameState, InteractionState
+from frontend.assets import AssetManager
+from engine.game import Game
+from frontend.ui import Button, UIManager
+from engine.constants import CellType, PieceType, Flavor, GameState, InteractionState
 
 
 class NeutrinoGUI:
@@ -26,13 +26,13 @@ class NeutrinoGUI:
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Neutrino Chess")
 
-        # Offset to center the board on the screen
-        self.x_offset = self.width // 2
+        # Offset to center the board on the screen, while leaving 300 on the right for the menu
+        self.x_offset = (self.width - 300) // 2
         self.y_offset = self.height // 2
 
         center_x = self.width // 2
         center_y = self.height // 2
-        # Rectangles for pop-up menu buttons
+        # Pop-up menu buttons
         self.btn_mu = Button(
             dimensions=(center_x - 120, center_y - 50, 100, 100),
             color=(200, 200, 200),
@@ -114,6 +114,9 @@ class NeutrinoGUI:
             if self.game.selected_cell and cell == self.game.selected_cell:
                 # Draw a thick green outline to show it is selected
                 pygame.draw.polygon(self.screen, (0, 255, 0), vertices, width=5)
+            elif self.game.last_move and cell in self.game.last_move:
+                # Draw a thick orange outline to show the last move
+                pygame.draw.polygon(self.screen, (255, 165, 0), vertices, width=5)
             else:
                 # Draw black=(0, 0, 0) outline
                 pygame.draw.polygon(self.screen, (0, 0, 0), vertices, width=2)

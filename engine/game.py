@@ -1,6 +1,6 @@
-from board import Board, Cell
-from rules import RulesEngine
-from constants import Army, Flavor, GameState, InteractionState
+from engine.board import Board, Cell
+from engine.rules import RulesEngine
+from engine.constants import Army, Flavor, GameState, InteractionState
 
 
 class Game:
@@ -12,6 +12,7 @@ class Game:
         self.selected_cell = None
         self.valid_cells = None
         self.pending_move_target = None
+        self.last_move = ()
 
         self.game_state = GameState.PLAYING
         self.interaction_state = InteractionState.SELECTING_PIECE
@@ -121,6 +122,7 @@ class Game:
                 # Pass the turn
                 self.current_turn = Army.ANTI_NEUTRINO if self.current_turn == Army.NEUTRINO else Army.NEUTRINO
                 
+                self.last_move = (self.selected_cell, target_cell)
                 self.selected_cell = None
                 self.valid_cells = None
                 self.interaction_state = InteractionState.SELECTING_PIECE
