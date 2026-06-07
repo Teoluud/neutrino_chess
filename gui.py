@@ -5,6 +5,7 @@ import pygame
 
 from assets import AssetManager
 from game import Game
+from ui import Button, UIManager
 from constants import CellType, PieceType, Flavor, GameState, InteractionState
 
 
@@ -16,6 +17,7 @@ class NeutrinoGUI:
         self.board = self.game.board
         self.hex_radius = hex_radius
         self.assets = AssetManager()
+        self.ui_manager = UIManager()
 
         # Pygame initialization
         pygame.init()
@@ -28,9 +30,22 @@ class NeutrinoGUI:
         self.x_offset = self.width // 2
         self.y_offset = self.height // 2
 
+        center_x = self.width // 2
+        center_y = self.height // 2
         # Rectangles for pop-up menu buttons
-        self.btn_mu: pygame.Rect | None = None
-        self.btn_tau: pygame.Rect | None = None
+        self.btn_mu = Button(
+            dimensions=(center_x - 120, center_y - 50, 100, 100),
+            color=(200, 200, 200),
+            text=self.assets.font.render(self.assets.symbols[Flavor.MUONIC], True, (0, 0, 0)),
+            data=Flavor.MUONIC)
+        self.btn_tau = Button(
+            dimensions=(center_x + 20, center_y - 50, 100, 100),
+            color=(200, 200, 200),
+            text=self.assets.font.render(self.assets.symbols[Flavor.TAUONIC], True, (0, 0, 0)),
+            data=Flavor.TAUONIC)
+        
+        self.ui_manager.buttons.append(self.btn_mu)
+        self.ui_manager.buttons.append(self.btn_tau)
 
     def axial_to_pixel(self, q: int, r: int) -> tuple[float, float]:
         """ Converts axial coordinates to pixel coordinates.
@@ -126,29 +141,11 @@ class NeutrinoGUI:
         overlay.fill((255, 255, 255, 180))
         self.screen.blit(overlay, (0, 0))
 
-        center_x = self.width // 2
-        center_y = self.height // 2
-
-        # Define button sizes and positions
-        self.btn_mu = pygame.Rect(center_x - 120, center_y - 50, 100, 100)
-        self.btn_tau = pygame.Rect(center_x + 20, center_y - 50, 100, 100)
-
-        # Draw the button backgrounds
-        pygame.draw.rect(self.screen, (200, 200, 200), self.btn_mu, border_radius=15)
-        pygame.draw.rect(self.screen, (200, 200, 200), self.btn_tau, border_radius=15)
-        pygame.draw.rect(self.screen, (0, 0, 0), self.btn_mu, width=3, border_radius=15)
-        pygame.draw.rect(self.screen, (0, 0, 0), self.btn_tau, width=3, border_radius=15)
-
-        # Render the text symbols onto the buttons
-        text_mu = self.assets.font.render(self.assets.symbols[Flavor.MUONIC], True, (0, 0, 0))
-        text_tau = self.assets.font.render(self.assets.symbols[Flavor.TAUONIC], True, (0, 0, 0))
-
-        self.screen.blit(text_mu, text_mu.get_rect(center=self.btn_mu.center))
-        self.screen.blit(text_tau, text_tau.get_rect(center=self.btn_tau.center))
+        self.ui_manager.draw_all(self.screen)
 
         # Draw the prompt text
         prompt = self.assets.font.render("Long Range Jump! Choose new flavor:", True, (0, 0, 0))
-        self.screen.blit(prompt, prompt.get_rect(center=(center_x, center_y - 80)))
+        self.screen.blit(prompt, prompt.get_rect(center=(self.width//2, self.height//2 - 80)))
 
     def draw_valid_moves(self, valid_cells: list) -> None:
         """ Draws a green circle on the valid moves cells for a selected piece.
@@ -174,10 +171,9 @@ class NeutrinoGUI:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1: # 1 is the left mouse button
                         if self.game.interaction_state == InteractionState.AWAITING_FLAVOR:
-                            if self.btn_mu and self.btn_mu.collidepoint(event.pos):
-                                self.game.resolve_flavor_choice(Flavor.MUONIC)
-                            elif self.btn_tau and self.btn_tau.collidepoint(event.pos):
-                                self.game.resolve_flavor_choice(Flavor.TAUONIC)
+                            flavor = self.ui_manager.handle_click(event.pos)
+                            if flavor:
+                                self.game.resolve_flavor_choice(flavor)
                         
                         else:
                             mouse_x, mouse_y = pygame.mouse.get_pos()
