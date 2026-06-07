@@ -61,7 +61,7 @@ class Game:
                 distance = piece._get_distance(self.selected_cell, target_cell)
                 
                 # Check for the Long-Range Electronic oscillation
-                if piece.flavor == Flavor.ELECTRONIC and distance == 2:
+                if len(piece.calculate_target_flavor(distance)) > 1:
                     if target_cell.piece:
                         self._execute_move(target_cell, distance, target_cell.piece.flavor)
                         return

@@ -18,32 +18,13 @@ class Piece:
     def oscillate(self, distance: int, new_flavor: 'Flavor | None' = None) -> None:
         """ Handles the neutrino oscillation after a move.
         """
-        # Short range
-        if distance == 1:
-            match self.flavor:
-                case Flavor.ELECTRONIC:
-                    pass
-                case Flavor.MUONIC:
-                    self.flavor = Flavor.TAUONIC
-                case Flavor.TAUONIC:
-                    self.flavor = Flavor.MUONIC
-                case _:
-                    raise ValueError("Flavor not recognized!")
-        # Long range
-        elif distance == 2:
-            match self.flavor:
-                case Flavor.ELECTRONIC:
-                    if new_flavor in (Flavor.MUONIC, Flavor.TAUONIC):
-                        self.flavor = new_flavor
-                    else:
-                        raise ValueError(f"Can't oscillate from Electronic to {new_flavor}")
-                case Flavor.MUONIC | Flavor.TAUONIC:
-                    self.flavor = Flavor.ELECTRONIC
-                case _:
-                    raise ValueError("Flavor not recognized!")
-        # Safety check
+        possible_flavors = self.calculate_target_flavor(distance)
+        if len(possible_flavors) == 1:
+            self.flavor = possible_flavors[0]
+        elif len(possible_flavors) > 1 and new_flavor in possible_flavors:
+            self.flavor = new_flavor
         else:
-            raise ValueError("Can move only 1 or 2 cells!")
+            raise ValueError
     
     def _get_distance(self, start_cell: Cell, target_cell: Cell) -> int:
         """ Calculates the absolute 3D hex distance between two cells.
