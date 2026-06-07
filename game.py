@@ -10,6 +10,7 @@ class Game:
         self.current_turn = Army.NEUTRINO
 
         self.selected_cell = None
+        self.valid_cells = None
         self.pending_move_target = None
 
         self.game_state = GameState.PLAYING
@@ -33,12 +34,14 @@ class Game:
             if clicked_cell.piece and clicked_cell.piece.army == self.current_turn:
                 self.selected_cell = clicked_cell
                 self.interaction_state = InteractionState.SELECTING_TARGET
+                self.valid_cells = [cell for cell in self.board.cells.values() if self._is_legal_move(self.selected_cell, cell)]
                 print(f"Selected: {clicked_cell.piece.army.name} at ({q}, {r})")
 
         elif self.interaction_state == InteractionState.SELECTING_TARGET:
             # A piece is already selected. Is the player trying to move or select a different piece?
             if clicked_cell.piece and clicked_cell.piece.army == self.current_turn:
                 self.selected_cell = clicked_cell
+                self.valid_cells = [cell for cell in self.board.cells.values() if self._is_legal_move(self.selected_cell, cell)]
                 print(f"Switched selection to: ({q}, {r})")
             else:
                 self._attempt_move(clicked_cell)
@@ -73,6 +76,7 @@ class Game:
             else:
                 print("Illegal move!")
                 self.selected_cell = None
+                self.valid_cells = None
                 self.interaction_state = InteractionState.SELECTING_PIECE
 
     def resolve_flavor_choice(self, chosen_flavor: Flavor) -> None:
@@ -100,6 +104,7 @@ class Game:
                 self.current_turn = Army.ANTI_NEUTRINO if self.current_turn == Army.NEUTRINO else Army.NEUTRINO
                 
                 self.selected_cell = None
+                self.valid_cells = None
                 self.interaction_state = InteractionState.SELECTING_PIECE
 
                 if self.rules.is_checkmate(self.current_turn):

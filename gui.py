@@ -150,6 +150,13 @@ class NeutrinoGUI:
         prompt = self.assets.font.render("Long Range Jump! Choose new flavor:", True, (0, 0, 0))
         self.screen.blit(prompt, prompt.get_rect(center=(center_x, center_y - 80)))
 
+    def draw_valid_moves(self, valid_cells: list) -> None:
+        """ Draws a green circle on the valid moves cells for a selected piece.
+        """
+        for cell in valid_cells:
+            x, y = self.axial_to_pixel(cell.q, cell.r)
+            pygame.draw.circle(self.screen, (0, 255, 0), (int(x), int(y)), self.hex_radius * 0.8, width=2)
+
     def run(self):
         """ Main game loop.
         """
@@ -158,7 +165,7 @@ class NeutrinoGUI:
         while running:
             if self.game.game_state == GameState.CHECKMATE:
                 running = False
-                print(f"Checkmate! {self.game.get_opponent} won!")
+                print(f"Checkmate! {self.game.get_opponent().name} won!")
                 continue
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -183,9 +190,9 @@ class NeutrinoGUI:
             if self.game.interaction_state == InteractionState.AWAITING_FLAVOR:
                 self.draw_flavor_menu()
             
+            if self.game.interaction_state == InteractionState.SELECTING_TARGET and self.game.valid_cells:
+                self.draw_valid_moves(self.game.valid_cells)
+            
             pygame.display.flip()
             clock.tick(60)
         pygame.quit()
-
-
-
