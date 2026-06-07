@@ -29,3 +29,9 @@ class GameState(Enum):
     PLAYING = 0
     CHECK = 1
     CHECKMATE = 2
+
+
+class InteractionState(Enum):
+    SELECTING_PIECE = 0
+    SELECTING_TARGET = 1
+    AWAITING_FLAVOR = 2

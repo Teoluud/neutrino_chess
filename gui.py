@@ -5,7 +5,7 @@ import pygame
 
 from assets import AssetManager
 from game import Game
-from constants import CellType, PieceType, Flavor, GameState
+from constants import CellType, PieceType, Flavor, GameState, InteractionState
 
 
 class NeutrinoGUI:
@@ -166,7 +166,7 @@ class NeutrinoGUI:
                 # Check for mouse clicks
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1: # 1 is the left mouse button
-                        if self.game.needs_flavor_choice:
+                        if self.game.interaction_state == InteractionState.AWAITING_FLAVOR:
                             if self.btn_mu and self.btn_mu.collidepoint(event.pos):
                                 self.game.resolve_flavor_choice(Flavor.MUONIC)
                             elif self.btn_tau and self.btn_tau.collidepoint(event.pos):
@@ -180,7 +180,7 @@ class NeutrinoGUI:
             self.screen.fill((255, 255, 255)) # White background
             self.draw_board()
 
-            if self.game.needs_flavor_choice:
+            if self.game.interaction_state == InteractionState.AWAITING_FLAVOR:
                 self.draw_flavor_menu()
             
             pygame.display.flip()
