@@ -35,7 +35,7 @@ class Piece:
 
         return max(dq, dr, ds)
     
-    def is_valid_move(self, start_cell: Cell, target_cell: Cell, board: Board) -> bool:
+    def is_valid_move(self, start_cell: Cell, target_cell: Cell) -> bool:
         """ Base validation that all pieces must pass.
         """
         distance = self._get_distance(start_cell, target_cell)
@@ -99,8 +99,8 @@ class King(Piece):
     def __init__(self, army: Army, piece_type: PieceType, flavor: Flavor) -> None:
         super().__init__(army, piece_type, flavor)
 
-    def is_valid_move(self, start_cell: Cell, target_cell: Cell, board: Board) -> bool:
+    def is_valid_move(self, start_cell: Cell, target_cell: Cell) -> bool:
         # Kings cannot capture
         if target_cell.piece:
             return False
-        return super().is_valid_move(start_cell, target_cell, board)
+        return super().is_valid_move(start_cell, target_cell)

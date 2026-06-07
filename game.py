@@ -48,7 +48,7 @@ class Game:
         """
         if not start_cell.piece:
             return False
-        if not start_cell.piece.is_valid_move(start_cell, target_cell, self.board):
+        if not start_cell.piece.is_valid_move(start_cell, target_cell):
             return False
         return self.rules.is_move_safe_for_king(start_cell, target_cell, self.current_turn)
 

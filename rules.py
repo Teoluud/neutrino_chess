@@ -25,7 +25,7 @@ class RulesEngine:
             # Identify enemy pieces
             if piece is not None and piece.army != army:
                 # Check if the piece threatens the king
-                if piece.is_valid_move(cell, king_cell, self.board):
+                if piece.is_valid_move(cell, king_cell):
                     return True
         
         return False
@@ -68,7 +68,7 @@ class RulesEngine:
             piece = cell.piece
             # Find pieces of the opposite army that can legally attack the King's square
             if piece is not None and piece.army != army:
-                if piece.is_valid_move(cell, king_cell, self.board):
+                if piece.is_valid_move(cell, king_cell):
                     attackers.append((piece, cell))
         return attackers
     
@@ -98,7 +98,7 @@ class RulesEngine:
 
         if king_piece is not None:
             for target_cell in self.board.cells.values():
-                if king_piece.is_valid_move(king_cell, target_cell, self.board) and self.is_move_safe_for_king(king_cell, target_cell, army):
+                if king_piece.is_valid_move(king_cell, target_cell) and self.is_move_safe_for_king(king_cell, target_cell, army):
                     return True
         return False
     
@@ -108,6 +108,6 @@ class RulesEngine:
         for cell in self.board.cells.values():
             piece = cell.piece
             if piece and piece.army != army and piece.piece_type != PieceType.KING:
-                if piece.is_valid_move(cell, target_cell, self.board):
+                if piece.is_valid_move(cell, target_cell):
                     return True
         return False
