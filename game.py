@@ -26,25 +26,38 @@ class Game:
         # Safety check: did the player click outside the game board?
         if (q, r) not in self.board.cells:
             self.selected_cell = None
+            self.valid_cells = None
             return
         
         clicked_cell = self.board.cells[(q, r)]
 
         if self.interaction_state == InteractionState.SELECTING_PIECE:
-            if clicked_cell.piece and clicked_cell.piece.army == self.current_turn:
-                self.selected_cell = clicked_cell
-                self.interaction_state = InteractionState.SELECTING_TARGET
-                self.valid_cells = [cell for cell in self.board.cells.values() if self._is_legal_move(self.selected_cell, cell)]
-                print(f"Selected: {clicked_cell.piece.army.name} at ({q}, {r})")
+            self._handle_piece_selection(clicked_cell)
 
         elif self.interaction_state == InteractionState.SELECTING_TARGET:
-            # A piece is already selected. Is the player trying to move or select a different piece?
-            if clicked_cell.piece and clicked_cell.piece.army == self.current_turn:
+            self._handle_target_selection(clicked_cell)
+
+    def _handle_piece_selection(self, clicked_cell: Cell) -> None:
+        """ Handles the piece selection (when the state is SELECTING_PIECE).
+        """
+        if clicked_cell.piece and clicked_cell.piece.army == self.current_turn:
                 self.selected_cell = clicked_cell
                 self.valid_cells = [cell for cell in self.board.cells.values() if self._is_legal_move(self.selected_cell, cell)]
-                print(f"Switched selection to: ({q}, {r})")
-            else:
-                self._attempt_move(clicked_cell)
+                self.interaction_state = InteractionState.SELECTING_TARGET
+                print(f"Selected: {clicked_cell.piece.army.name} at ({clicked_cell.q}, {clicked_cell.r})")
+    
+    def _handle_target_selection(self, clicked_cell: Cell) -> None:
+        """ Handles the target selection:
+        - Selects a new piece if it's an allied one
+        - Attemps to move otherwise
+        """
+        # A piece is already selected. Is the player trying to move or select a different piece?
+        if clicked_cell.piece and clicked_cell.piece.army == self.current_turn:
+            self.selected_cell = clicked_cell
+            self.valid_cells = [cell for cell in self.board.cells.values() if self._is_legal_move(self.selected_cell, cell)]
+            print(f"Switched selection to: ({clicked_cell.q}, {clicked_cell.r})")
+        else:
+            self._attempt_move(clicked_cell)
 
     def _is_legal_move(self, start_cell: Cell, target_cell: Cell) -> bool:
         """ Checks if there is a piece on the start cell and runs the piece's move validation.
@@ -53,7 +66,9 @@ class Game:
             return False
         if not start_cell.piece.is_valid_move(start_cell, target_cell):
             return False
-        return self.rules.is_move_safe_for_king(start_cell, target_cell, self.current_turn)
+        if not self.rules.get_safe_flavors(start_cell, target_cell, self.current_turn):
+            return False
+        return True
 
     def _attempt_move(self, target_cell: Cell) -> None:
         """ Validates and executes a move to the target cell.
@@ -63,8 +78,11 @@ class Game:
             if piece:
                 distance = piece._get_distance(self.selected_cell, target_cell)
                 
-                # Check for the Long-Range Electronic oscillation
-                if len(piece.calculate_target_flavor(distance)) > 1:
+                # Get the list of safe flavors
+                safe_flavors = self.rules.get_safe_flavors(self.selected_cell, target_cell, self.current_turn)
+                
+                # Check if we need the player to choose
+                if len(safe_flavors) > 1:
                     if target_cell.piece:
                         self._execute_move(target_cell, distance, target_cell.piece.flavor)
                         return
@@ -72,7 +90,7 @@ class Game:
                     self.interaction_state = InteractionState.AWAITING_FLAVOR
                     return
                 # If no choice is needed, execute the move normally
-                self._execute_move(target_cell, distance)
+                self._execute_move(target_cell, distance, safe_flavors[0])
             else:
                 print("Illegal move!")
                 self.selected_cell = None
@@ -124,3 +142,7 @@ class Game:
             return Army.NEUTRINO
         else:
             raise ValueError(f"{self.current_turn} is not a valid army!")
+        
+
+
+
