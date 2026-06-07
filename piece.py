@@ -101,6 +101,6 @@ class King(Piece):
 
     def is_valid_move(self, start_cell: Cell, target_cell: Cell) -> bool:
         # Kings cannot capture
-        if target_cell.piece:
+        if target_cell.piece and target_cell.piece.piece_type != PieceType.KING:
             return False
         return super().is_valid_move(start_cell, target_cell)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from constants import Army, PieceType
+from constants import Army, PieceType, Flavor
 
 if TYPE_CHECKING:
     from board import Board, Cell
@@ -30,9 +30,11 @@ class RulesEngine:
         
         return False
     
-    def is_move_safe_for_king(self, start_cell: 'Cell', target_cell: 'Cell', current_turn: 'Army') -> bool:
+    def get_safe_flavors(self, start_cell: 'Cell', target_cell: 'Cell', current_turn: 'Army') -> list[Flavor]:
         moving_piece = start_cell.piece
         original_target_piece = target_cell.piece
+        
+        safe_flavors = []
 
         if moving_piece:
             original_flavor = moving_piece.flavor
@@ -43,22 +45,21 @@ class RulesEngine:
             target_cell.piece = moving_piece
             start_cell.piece = None
             
-            is_safe = False
-            # Check if this state leaves the King in danger
+            # Test EVERY possible flavor
             for flavor in possible_flavors:
                 target_cell.piece.oscillate(distance, flavor)
-                is_safe = not self.is_in_check(current_turn)
-                if is_safe:
-                    break
+                if not self.is_in_check(current_turn):
+                    safe_flavors.append(flavor) # Keep it if it's safe
+                
+                # Reset piece state for the next loop iteration
                 target_cell.piece.flavor = original_flavor
             
             # Revert the move
             start_cell.piece = moving_piece
             target_cell.piece = original_target_piece
             start_cell.piece.flavor = original_flavor
-        else:
-            raise ValueError
-        return is_safe
+
+        return safe_flavors
     
     def get_attackers(self, king_cell: Cell, army: Army) -> list[tuple[Piece, Cell]]:
         """ Returns a list of (piece, cell) that are currently threatening the king.
@@ -98,7 +99,7 @@ class RulesEngine:
 
         if king_piece is not None:
             for target_cell in self.board.cells.values():
-                if king_piece.is_valid_move(king_cell, target_cell) and self.is_move_safe_for_king(king_cell, target_cell, army):
+                if king_piece.is_valid_move(king_cell, target_cell) and self.get_safe_flavors(king_cell, target_cell, army):
                     return True
         return False
     
