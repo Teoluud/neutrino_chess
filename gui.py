@@ -158,7 +158,7 @@ class NeutrinoGUI:
         while running:
             if self.game.game_state == GameState.CHECKMATE:
                 running = False
-                print(f"Checkmate! {self.game.current_turn.name} won!")
+                print(f"Checkmate! {self.game.get_opponent} won!")
                 continue
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:

@@ -106,3 +106,13 @@ class Game:
                 else:
                     self.game_state = GameState.PLAYING
                 print(f"Move successful. It is now {self.current_turn.name}'s turn.")
+
+    def get_opponent(self) -> Army:
+        """ Returns the opponent of the current_turn player.
+        """
+        if self.current_turn == Army.NEUTRINO:
+            return Army.ANTI_NEUTRINO
+        elif self.current_turn == Army.ANTI_NEUTRINO:
+            return Army.NEUTRINO
+        else:
+            raise ValueError(f"{self.current_turn} is not a valid army!")
