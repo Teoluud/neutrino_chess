@@ -106,7 +106,7 @@ class RulesEngine:
         """
         for cell in self.board.cells.values():
             piece = cell.piece
-            if piece and army != army and piece.piece_type != PieceType.KING:
+            if piece and piece.army != army and piece.piece_type != PieceType.KING:
                 if piece.is_valid_move(cell, target_cell, self.board):
                     return True
         return False
