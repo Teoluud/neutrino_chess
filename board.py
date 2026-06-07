@@ -1,19 +1,21 @@
+from dataclasses import dataclass
+
 from piece import Piece, King
 from constants import CellType, Army, PieceType, Flavor
 
 
+@dataclass
 class Cell:
     """ Represents a single hexagonal cell on the board using axial coordinates.
     """
-    def __init__(self, q: int, r: int, cell_type: CellType) -> None:
-        """ Constructor.
-        """
-        self.q = q
-        self.r = r
-        self.s = -q - r
-        self.cell_type = cell_type
-        self.piece: Piece | None = None
+    q: int
+    r: int
+    cell_type: CellType
+    piece: Piece | None = None
 
+    @property
+    def s(self) -> int:
+        return -self.q - self.r
 
 
 class Board:
