@@ -33,18 +33,31 @@ class RulesEngine:
     def is_move_safe_for_king(self, start_cell: 'Cell', target_cell: 'Cell', current_turn: 'Army') -> bool:
         moving_piece = start_cell.piece
         original_target_piece = target_cell.piece
+
+        if moving_piece:
+            original_flavor = moving_piece.flavor
+            distance = moving_piece._get_distance(start_cell, target_cell)
+            possible_flavors = moving_piece.calculate_target_flavor(distance)
         
-        # Simulate the move
-        target_cell.piece = moving_piece
-        start_cell.piece = None
-        
-        # Check if this state leaves the King in danger
-        is_safe = not self.is_in_check(current_turn)
-        
-        # Revert the move
-        start_cell.piece = moving_piece
-        target_cell.piece = original_target_piece
-    
+            # Simulate the move
+            target_cell.piece = moving_piece
+            start_cell.piece = None
+            
+            is_safe = False
+            # Check if this state leaves the King in danger
+            for flavor in possible_flavors:
+                target_cell.piece.oscillate(distance, flavor)
+                is_safe = not self.is_in_check(current_turn)
+                if is_safe:
+                    break
+                target_cell.piece.flavor = original_flavor
+            
+            # Revert the move
+            start_cell.piece = moving_piece
+            target_cell.piece = original_target_piece
+            start_cell.piece.flavor = original_flavor
+        else:
+            raise ValueError
         return is_safe
     
     def get_attackers(self, king_cell: Cell, army: Army) -> list[tuple[Piece, Cell]]:
@@ -85,20 +98,8 @@ class RulesEngine:
 
         if king_piece is not None:
             for target_cell in self.board.cells.values():
-                if king_piece.is_valid_move(king_cell, target_cell, self.board):
-                    original_target_piece = target_cell.piece
-
-                    target_cell.piece = king_piece
-                    king_cell.piece = None
-
-                    attackers = self.get_attackers(target_cell, army)
-
-                    king_cell.piece = king_piece
-                    target_cell.piece = original_target_piece
-
-                    # If no attackers found, the King can escape
-                    if not attackers:
-                        return True
+                if king_piece.is_valid_move(king_cell, target_cell, self.board) and self.is_move_safe_for_king(king_cell, target_cell, army):
+                    return True
         return False
     
     def can_any_piece_capture(self, target_cell: Cell, army: Army) -> bool:
