@@ -70,7 +70,7 @@ class BoardRenderer:
     def draw_board(self, game: Game):
         """ Draws the hexagonal board and its specific zones.
         """
-        for cell in self.board.cells.values():
+        for cell in game.board.cells.values():
             # Determine cell color
             if cell.cell_type == CellType.DEPLOYMENT:
                 if cell.q < 0:

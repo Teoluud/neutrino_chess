@@ -35,3 +35,4 @@ class InteractionState(Enum):
     SELECTING_PIECE = 0
     SELECTING_TARGET = 1
     AWAITING_FLAVOR = 2
+    ENDGAME_MENU = 3

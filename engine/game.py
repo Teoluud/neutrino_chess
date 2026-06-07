@@ -17,6 +17,21 @@ class Game:
         self.game_state = GameState.PLAYING
         self.interaction_state = InteractionState.SELECTING_PIECE
 
+    def reset(self) -> None:
+        """ Resets the game.
+        """
+        self.board = Board()
+        self.rules = RulesEngine(self.board)
+        self.current_turn = Army.NEUTRINO
+
+        self.selected_cell = None
+        self.valid_cells = None
+        self.pending_move_target = None
+        self.last_move = ()
+
+        self.game_state = GameState.PLAYING
+        self.interaction_state = InteractionState.SELECTING_PIECE
+
     def handle_click(self, q: int, r: int):
         """ Processes a mouse click at screen coordinates (x, y).
         """
@@ -144,7 +159,3 @@ class Game:
             return Army.NEUTRINO
         else:
             raise ValueError(f"{self.current_turn} is not a valid army!")
-        
-
-
-

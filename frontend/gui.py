@@ -19,6 +19,7 @@ class NeutrinoGUI:
         self.hex_radius = hex_radius
         self.assets = AssetManager()
         self.ui_manager = UIManager()
+        self.endgame_ui = UIManager()
 
         # Pygame initialization
         pygame.init()
@@ -42,9 +43,17 @@ class NeutrinoGUI:
             color=(200, 200, 200),
             text=self.assets.font.render(self.assets.symbols[Flavor.TAUONIC], True, (0, 0, 0)),
             data=Flavor.TAUONIC)
-        
         self.ui_manager.buttons.append(self.btn_mu)
         self.ui_manager.buttons.append(self.btn_tau)
+
+        # Engame buttons
+        self.play_again_btn = Button(
+            dimensions=(center_x - 200, center_y - 50, 400, 100),
+            color=(200, 200, 200),
+            text=self.assets.font.render("Play Again", True, (0, 0, 0)),
+            data="RESTART"
+        )
+        self.endgame_ui.buttons.append(self.play_again_btn)
 
     def draw_flavor_menu(self):
         """ Draws a semi-transparent overlay and flavor selection buttons.
@@ -60,6 +69,20 @@ class NeutrinoGUI:
         prompt = self.assets.font.render("Long Range Jump! Choose new flavor:", True, (0, 0, 0))
         self.screen.blit(prompt, prompt.get_rect(center=(self.width//2, self.height//2 - 80)))
 
+    def draw_endgame_menu(self):
+        """ Draws the endgame menu.
+        """
+        # Draw a semi-transparent white overlay
+        overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        overlay.fill((255, 255, 255, 180))
+        self.screen.blit(overlay, (0, 0))
+
+        self.endgame_ui.draw_all(self.screen)
+
+        # Draw the prompt text
+        prompt = self.assets.font.render(f"CHECKMATE! {self.game.get_opponent().name} won!", True, (0, 0, 0))
+        self.screen.blit(prompt, prompt.get_rect(center=(self.width//2, self.height//2 - 80)))
+
     def draw_valid_moves(self, valid_cells: list) -> None:
         """ Draws a green circle on the valid moves cells for a selected piece.
         """
@@ -73,21 +96,25 @@ class NeutrinoGUI:
         clock = pygame.time.Clock()
         running = True
         while running:
-            if self.game.game_state == GameState.CHECKMATE:
-                running = False
+            if self.game.game_state == GameState.CHECKMATE and self.game.interaction_state != InteractionState.ENDGAME_MENU:
+                self.game.interaction_state = InteractionState.ENDGAME_MENU
                 print(f"Checkmate! {self.game.get_opponent().name} won!")
-                continue
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 # Check for mouse clicks
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1: # 1 is the left mouse button
+                        # Flavor selection
                         if self.game.interaction_state == InteractionState.AWAITING_FLAVOR:
                             flavor = self.ui_manager.handle_click(event.pos)
                             if flavor:
                                 self.game.resolve_flavor_choice(flavor)
-                        
+                        # Endgame menu selection
+                        elif self.game.interaction_state == InteractionState.ENDGAME_MENU:
+                            action = self.endgame_ui.handle_click(event.pos)
+                            if action == "RESTART":
+                                self.game.reset()
                         else:
                             mouse_x, mouse_y = pygame.mouse.get_pos()
                             q, r = self.board_renderer.pixel_to_axial(mouse_x, mouse_y)
@@ -101,6 +128,9 @@ class NeutrinoGUI:
             
             if self.game.interaction_state == InteractionState.SELECTING_TARGET and self.game.valid_cells:
                 self.draw_valid_moves(self.game.valid_cells)
+
+            if self.game.interaction_state == InteractionState.ENDGAME_MENU:
+                self.draw_endgame_menu()
             
             pygame.display.flip()
             clock.tick(60)
