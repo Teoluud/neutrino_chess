@@ -7,13 +7,13 @@ from frontend.assets import AssetManager
 from frontend.ui import Button, UIManager
 from frontend.board_renderer import BoardRenderer
 from engine.game import Game
-from engine.constants import Flavor, GameState, InteractionState
+from engine.constants import Flavor, Army, GameState, InteractionState
 
 
 class NeutrinoGUI:
     """ Handles the GUI for the game.
     """
-    def __init__(self, game: Game, hex_radius: int = 50) -> None:
+    def __init__(self, game: Game, hex_radius: int = 45) -> None:
         self.game = game
         self.board = self.game.board
         self.hex_radius = hex_radius
@@ -90,6 +90,36 @@ class NeutrinoGUI:
             x, y = self.board_renderer.axial_to_pixel(cell.q, cell.r)
             pygame.draw.circle(self.screen, (0, 255, 0), (int(x), int(y)), self.hex_radius * 0.8, width=2)
 
+    def draw_captured_pieces(self):
+        """ Draws the captured pieces in the right-side panel. """
+        # Draw a subtle background for the side panel
+        pygame.draw.rect(self.screen, (240, 240, 240), (700, 0, 300, self.height))
+
+        # Neutrino captures at the top, Anti-neutrino captures at the bottom
+        positions = {
+            Army.NEUTRINO: (750, 100),
+            Army.ANTI_NEUTRINO: (750, 500)
+        }
+
+        for army, (start_x, start_y) in positions.items():
+            title_text = self.assets.font.render(army.name, True, (0, 0, 0))
+            self.screen.blit(title_text, title_text.get_rect(center=(self.width - (300 // 2), start_y - 50)))
+            for i, piece in enumerate(self.game.captured_pieces[army]):
+                # Create a 3-column grid spacing them 60 pixels apart
+                x = start_x + (i % 3) * 2 * self.hex_radius
+                y = start_y + (i // 3) * 2 * self.hex_radius
+
+                # Draw the piece
+                color = self.assets.get_color(piece.army)
+                symbol = self.assets.symbols[piece.flavor]
+                pygame.draw.circle(self.screen, color, (x, y), self.hex_radius * 0.7)
+                
+                text_surface = self.assets.font.render(symbol, True, (0, 0, 0))
+                self.screen.blit(text_surface, text_surface.get_rect(center=(x, y)))
+
+                if piece == self.game.selected_captured_piece:
+                    pygame.draw.circle(self.screen, (0, 255, 0), (x, y), self.hex_radius * 0.7, width=5)
+
     def run(self):
         """ Main game loop.
         """
@@ -117,11 +147,30 @@ class NeutrinoGUI:
                                 self.game.reset()
                         else:
                             mouse_x, mouse_y = pygame.mouse.get_pos()
-                            q, r = self.board_renderer.pixel_to_axial(mouse_x, mouse_y)
-                            self.game.handle_click(q, r)
+                            if mouse_x < 700:
+                                q, r = self.board_renderer.pixel_to_axial(mouse_x, mouse_y)
+                                self.game.handle_click(q, r)
+                            else:
+                                start_x = 750
+                                start_y = 100 if self.game.current_turn == Army.NEUTRINO else 500
+                                
+                                # Loop through the active player's captured pieces
+                                for i, piece in enumerate(self.game.captured_pieces[self.game.current_turn]):
+                                    # Calculate the exact center of this piece (using our drawing math)
+                                    x = start_x + (i % 3) * 2 * self.hex_radius
+                                    y = start_y + (i // 3) * 2 * self.hex_radius
+                                    
+                                    # Check if the mouse click is within the piece's circle
+                                    if m.hypot(mouse_x - x, mouse_y - y) <= self.hex_radius * 0.7:
+                                        print(f"Clicked on {piece.flavor.name} from the reserve!")
+                                        self.game.selected_captured_piece = piece
+                                        self.game.selected_cell = None
+                                        self.game.valid_cells = None
+                                        break # Stop checking once we find the clicked piece
             
             self.screen.fill((255, 255, 255)) # White background
             self.board_renderer.draw_board(self.game)
+            self.draw_captured_pieces()
 
             if self.game.interaction_state == InteractionState.AWAITING_FLAVOR:
                 self.draw_flavor_menu()

@@ -1,7 +1,11 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 from engine.board import Board, Cell
 from engine.rules import RulesEngine
-from engine.constants import Army, Flavor, GameState, InteractionState
-
+from engine.constants import Army, Flavor, CellType, GameState, InteractionState
+if TYPE_CHECKING:
+    from engine.piece import Piece
 
 class Game:
     def __init__(self) -> None:
@@ -17,20 +21,43 @@ class Game:
         self.game_state = GameState.PLAYING
         self.interaction_state = InteractionState.SELECTING_PIECE
 
+        # Dictionary to hold all the captured pieces
+        self.captured_pieces = {
+            Army.NEUTRINO: [],
+            Army.ANTI_NEUTRINO: []
+        }
+        self.selected_captured_piece = None
+
     def reset(self) -> None:
         """ Resets the game.
         """
         self.board = Board()
         self.rules = RulesEngine(self.board)
         self.current_turn = Army.NEUTRINO
-
         self.selected_cell = None
         self.valid_cells = None
         self.pending_move_target = None
         self.last_move = ()
-
         self.game_state = GameState.PLAYING
         self.interaction_state = InteractionState.SELECTING_PIECE
+        self.captured_pieces = {
+            Army.NEUTRINO: [],
+            Army.ANTI_NEUTRINO: []
+        }
+        self.selected_captured_piece: Piece | None = None
+
+    def pass_turn(self) -> None:
+        """ Passes the turn and handles the checks for Game State.
+        """
+        # Pass the turn
+        self.current_turn = Army.ANTI_NEUTRINO if self.current_turn == Army.NEUTRINO else Army.NEUTRINO
+        if self.rules.is_checkmate(self.current_turn):
+            self.game_state = GameState.CHECKMATE
+        elif self.rules.is_in_check(self.current_turn):
+            self.game_state = GameState.CHECK
+        else:
+            self.game_state = GameState.PLAYING
+        print(f"Action successful. It is now {self.current_turn.name}'s turn.")
 
     def handle_click(self, q: int, r: int):
         """ Processes a mouse click at screen coordinates (x, y).
@@ -46,6 +73,9 @@ class Game:
             return
         
         clicked_cell = self.board.cells[(q, r)]
+
+        if self.selected_captured_piece:
+            self._deploy_captured_piece(clicked_cell)
 
         if self.interaction_state == InteractionState.SELECTING_PIECE:
             self._handle_piece_selection(clicked_cell)
@@ -74,6 +104,42 @@ class Game:
             print(f"Switched selection to: ({clicked_cell.q}, {clicked_cell.r})")
         else:
             self._attempt_move(clicked_cell)
+
+    def _deploy_captured_piece(self, clicked_cell: Cell) -> None:
+        """ Handles the redeployment of a captured field to the player's own deployment zone.
+        """
+        if self.game_state == GameState.CHECK:
+            self.selected_captured_piece = None
+            return
+
+        if clicked_cell.piece is not None:
+            self.selected_captured_piece = None
+            return
+        
+        if clicked_cell.cell_type != CellType.DEPLOYMENT:
+            self.selected_captured_piece = None
+            return
+        
+        if self.current_turn == Army.NEUTRINO and clicked_cell.q < 0:
+            self.selected_captured_piece = None
+            return
+        
+        if self.current_turn == Army.ANTI_NEUTRINO and clicked_cell.q > 0:
+            self.selected_captured_piece = None
+            return
+
+        # Place the piece onto the selected cell and swap its army
+        if self.selected_captured_piece:
+            clicked_cell.piece = self.selected_captured_piece
+            clicked_cell.piece.army = self.current_turn
+
+        # Remove the piece from the active player's reserve
+        self.captured_pieces[self.current_turn].remove(self.selected_captured_piece)
+
+
+        self.selected_captured_piece = None
+
+        self.pass_turn()
 
     def _is_legal_move(self, start_cell: Cell, target_cell: Cell) -> bool:
         """ Checks if there is a piece on the start cell and runs the piece's move validation.
@@ -132,23 +198,16 @@ class Game:
                 piece_to_move.oscillate(distance, chosen_flavor)
                 # Move the piece on the board
                 self.selected_cell.piece = None
+                if target_cell.piece:
+                    self.captured_pieces[self.current_turn].append(target_cell.piece)
                 target_cell.piece = piece_to_move
-
-                # Pass the turn
-                self.current_turn = Army.ANTI_NEUTRINO if self.current_turn == Army.NEUTRINO else Army.NEUTRINO
                 
                 self.last_move = (self.selected_cell, target_cell)
                 self.selected_cell = None
                 self.valid_cells = None
                 self.interaction_state = InteractionState.SELECTING_PIECE
 
-                if self.rules.is_checkmate(self.current_turn):
-                    self.game_state = GameState.CHECKMATE
-                elif self.rules.is_in_check(self.current_turn):
-                    self.game_state = GameState.CHECK
-                else:
-                    self.game_state = GameState.PLAYING
-                print(f"Move successful. It is now {self.current_turn.name}'s turn.")
+                self.pass_turn()
 
     def get_opponent(self) -> Army:
         """ Returns the opponent of the current_turn player.
