@@ -119,6 +119,42 @@ class NeutrinoGUI:
 
                 if piece == self.game.selected_captured_piece:
                     pygame.draw.circle(self.screen, (0, 255, 0), (x, y), self.hex_radius * 0.7, width=5)
+    
+    def _handle_mouse_click(self, mouse_pos: tuple[int, int]) -> None:
+        """ Helper function to handle the mouse click.
+        """
+        # Flavor selection
+        if self.game.interaction_state == InteractionState.AWAITING_FLAVOR:
+            flavor = self.ui_manager.handle_click(mouse_pos)
+            if flavor:
+                self.game.resolve_flavor_choice(flavor)
+        # Endgame menu selection
+        elif self.game.interaction_state == InteractionState.ENDGAME_MENU:
+            action = self.endgame_ui.handle_click(mouse_pos)
+            if action == "RESTART":
+                self.game.reset()
+        else:
+            mouse_x, mouse_y = mouse_pos
+            if mouse_x < 700:
+                q, r = self.board_renderer.pixel_to_axial(mouse_x, mouse_y)
+                self.game.handle_click(q, r)
+            else:
+                start_x = 750
+                start_y = 100 if self.game.current_turn == Army.NEUTRINO else 500
+                
+                # Loop through the active player's captured pieces
+                for i, piece in enumerate(self.game.captured_pieces[self.game.current_turn]):
+                    # Calculate the exact center of this piece (using our drawing math)
+                    x = start_x + (i % 3) * 2 * self.hex_radius
+                    y = start_y + (i // 3) * 2 * self.hex_radius
+                    
+                    # Check if the mouse click is within the piece's circle
+                    if m.hypot(mouse_x - x, mouse_y - y) <= self.hex_radius * 0.7:
+                        print(f"Clicked on {piece.flavor.name} from the reserve!")
+                        self.game.selected_captured_piece = piece
+                        self.game.selected_cell = None
+                        self.game.valid_cells = None
+                        break # Stop checking once we find the clicked piece
 
     def run(self):
         """ Main game loop.
@@ -135,38 +171,7 @@ class NeutrinoGUI:
                 # Check for mouse clicks
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1: # 1 is the left mouse button
-                        # Flavor selection
-                        if self.game.interaction_state == InteractionState.AWAITING_FLAVOR:
-                            flavor = self.ui_manager.handle_click(event.pos)
-                            if flavor:
-                                self.game.resolve_flavor_choice(flavor)
-                        # Endgame menu selection
-                        elif self.game.interaction_state == InteractionState.ENDGAME_MENU:
-                            action = self.endgame_ui.handle_click(event.pos)
-                            if action == "RESTART":
-                                self.game.reset()
-                        else:
-                            mouse_x, mouse_y = pygame.mouse.get_pos()
-                            if mouse_x < 700:
-                                q, r = self.board_renderer.pixel_to_axial(mouse_x, mouse_y)
-                                self.game.handle_click(q, r)
-                            else:
-                                start_x = 750
-                                start_y = 100 if self.game.current_turn == Army.NEUTRINO else 500
-                                
-                                # Loop through the active player's captured pieces
-                                for i, piece in enumerate(self.game.captured_pieces[self.game.current_turn]):
-                                    # Calculate the exact center of this piece (using our drawing math)
-                                    x = start_x + (i % 3) * 2 * self.hex_radius
-                                    y = start_y + (i // 3) * 2 * self.hex_radius
-                                    
-                                    # Check if the mouse click is within the piece's circle
-                                    if m.hypot(mouse_x - x, mouse_y - y) <= self.hex_radius * 0.7:
-                                        print(f"Clicked on {piece.flavor.name} from the reserve!")
-                                        self.game.selected_captured_piece = piece
-                                        self.game.selected_cell = None
-                                        self.game.valid_cells = None
-                                        break # Stop checking once we find the clicked piece
+                        self._handle_mouse_click(event.pos)
             
             self.screen.fill((255, 255, 255)) # White background
             self.board_renderer.draw_board(self.game)
